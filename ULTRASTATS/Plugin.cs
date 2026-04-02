@@ -20,7 +20,7 @@ public class Plugin : BaseUnityPlugin
 {
     public const string ModGuid = "atom.ultrastats";
     public const string ModName = "ULTRASTATS";
-    public const string ModVer = "0.0.11";
+    public const string ModVer = "0.0.12";
 
     internal static Plugin? Instance { get; private set; }
     internal static ManualLogSource Log = null!;

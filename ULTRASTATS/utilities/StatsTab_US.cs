@@ -311,6 +311,11 @@ internal sealed class StatsTabController_US : MonoBehaviour
         public long SortId;
         public string Version = "-";
         public string[] Cells = Array.Empty<string>();
+
+        public string TimeRank = string.Empty;
+        public string KillsRank = string.Empty;
+        public string StyleRank = string.Empty;
+        public string TotalRank = string.Empty;
     }
 
     [Serializable]
@@ -1426,6 +1431,7 @@ internal sealed class StatsTabController_US : MonoBehaviour
                 rowIndex % 2 == 0 ? RowColorEven : RowColorOdd,
                 false
             );
+
             RectTransform rowRect = rowObj.GetComponent<RectTransform>();
             rowRect.anchorMin = new Vector2(0f, 1f);
             rowRect.anchorMax = new Vector2(1f, 1f);
@@ -1433,16 +1439,38 @@ internal sealed class StatsTabController_US : MonoBehaviour
             rowRect.sizeDelta = new Vector2(0f, RowHeight);
             rowRect.anchoredPosition = new Vector2(0f, -rowIndex * RowHeight);
 
-            CreateBottomLine(rowRect, RowHeight);
-            CreateColumnSeparators(rowRect, chart.WidthFractions, RowHeight);
-
             float start = 0f;
             for (int i = 0; i < chart.Headers.Length; i++)
             {
+                float end = start + chart.WidthFractions[i];
+
+                bool isRankColumn = i == chart.Headers.Length - 1;
+                bool isPRank = isRankColumn && NormalizeRankLetter(row.TotalRank) == "P";
+
+                if (isPRank)
+                    CreateCellBackground(rowRect, start, end, 0f, RowHeight, PRankCellColor);
+
                 string cellText = i < row.Cells.Length ? row.Cells[i] : string.Empty;
-                CreateCellText(rowRect, cellText, start, start + chart.WidthFractions[i], 0f, RowHeight, 16f, FontStyles.Normal, TextAlignmentOptions.Center);
-                start += chart.WidthFractions[i];
+                if (isPRank)
+                    cellText = "<color=#FFFFFF>P</color>";
+
+                CreateCellText(
+                    rowRect,
+                    cellText,
+                    start,
+                    end,
+                    0f,
+                    RowHeight,
+                    16f,
+                    FontStyles.Normal,
+                    TextAlignmentOptions.Center
+                );
+
+                start = end;
             }
+
+            CreateBottomLine(rowRect, RowHeight);
+            CreateColumnSeparators(rowRect, chart.WidthFractions, RowHeight);
 
             _spawnedRows.Add(rowObj);
         }
@@ -1557,21 +1585,40 @@ internal sealed class StatsTabController_US : MonoBehaviour
         }
 
         string? restarts = GetJsonValue(line, "restarts", "r");
-        string? totalRank = GetJsonValue(line, "totalRank", "rt");
+
+        string? packedRanks = GetJsonValue(line, "rankString", "individualRanks", "rs");
+
+        string timeRank = NormalizeRankLetter(GetJsonValue(line, "timeRank"));
+        string killsRank = NormalizeRankLetter(GetJsonValue(line, "killsRank"));
+        string styleRank = NormalizeRankLetter(GetJsonValue(line, "styleRank"));
+        string totalRank = NormalizeRankLetter(GetJsonValue(line, "totalRank", "rt"));
+
+        if (string.IsNullOrEmpty(timeRank))
+            timeRank = ExtractPackedRank(packedRanks, 0);
+
+        if (string.IsNullOrEmpty(killsRank))
+            killsRank = ExtractPackedRank(packedRanks, 1);
+
+        if (string.IsNullOrEmpty(styleRank))
+            styleRank = ExtractPackedRank(packedRanks, 2);
 
         return new StatsRowData
         {
             SortId = ParseSortId(id),
             Version = string.IsNullOrWhiteSpace(version) ? "-" : version,
+            TimeRank = timeRank,
+            KillsRank = killsRank,
+            StyleRank = styleRank,
+            TotalRank = totalRank,
             Cells = new[]
             {
             DisplayValue(id),
             formattedDate,
-            formattedElapsed,
-            DisplayValue(kills),
-            DisplayValue(style),
+            ColorizeValue(formattedElapsed, timeRank),
+            ColorizeValue(kills, killsRank),
+            ColorizeValue(style, styleRank),
             DisplayValue(restarts),
-            DisplayValue(totalRank)
+            ColorizeValue(totalRank, totalRank)
         }
         };
     }
@@ -1898,6 +1945,90 @@ internal sealed class StatsTabController_US : MonoBehaviour
             return Directory.GetCurrentDirectory();
 
         return Path.GetFullPath(Path.Combine(assemblyDir, "..", "..", ".."));
+    }
+
+    private static string NormalizeRankLetter(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return string.Empty;
+
+        raw = raw.Trim().ToUpperInvariant();
+        return raw.Length == 1 ? raw : string.Empty;
+    }
+
+    private static string ExtractPackedRank(string? packedRanks, int index)
+    {
+        if (string.IsNullOrWhiteSpace(packedRanks))
+            return string.Empty;
+
+        string trimmed = packedRanks.Trim().ToUpperInvariant();
+        if (index < 0 || index >= trimmed.Length)
+            return string.Empty;
+
+        return NormalizeRankLetter(trimmed[index].ToString());
+    }
+
+    private static string RankToColorHex(string? rank)
+    {
+        return NormalizeRankLetter(rank) switch
+        {
+            "S" => "#FF0000",
+            "A" => "#FF6900",
+            "B" => "#FFD900",
+            "C" => "#4BFF00",
+            "D" => "#0095FF",
+            _ => string.Empty
+        };
+    }
+
+    private static string ColorizeValue(string? value, string? rank)
+    {
+        string shown = DisplayValue(value);
+        string colorHex = RankToColorHex(rank);
+
+        if (shown == "-" || string.IsNullOrWhiteSpace(colorHex))
+            return shown;
+
+        return $"<color={colorHex}>{shown}</color>";
+    }
+
+    private static string ColorizeByRank(string? value, string? rank)
+    {
+        string shown = DisplayValue(value);
+        string normalizedRank = NormalizeRankLetter(rank);
+
+        if (shown == "-")
+            return shown;
+
+        if (normalizedRank == "P")
+        {
+            // TMP <mark> needs alpha. CC is a good strong highlight.
+            return $"<mark=#FFAE00CC><color=#FFFFFF>{shown}</color></mark>";
+        }
+
+        string colorHex = RankToColorHex(normalizedRank);
+        if (string.IsNullOrWhiteSpace(colorHex))
+            return shown;
+
+        return $"<color={colorHex}>{shown}</color>";
+    }
+
+    private static readonly Color PRankCellColor = new Color32(0xFF, 0xAE, 0x00, 0xFF);
+
+    private void CreateCellBackground(
+        RectTransform parent,
+        float xMinNorm,
+        float xMaxNorm,
+        float yMin,
+        float yMax,
+        Color color)
+    {
+        GameObject bg = CreateImage("CellBackground", parent, color, false);
+        RectTransform rect = bg.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(xMinNorm, 0f);
+        rect.anchorMax = new Vector2(xMaxNorm, 0f);
+        rect.offsetMin = new Vector2(0f, yMin);
+        rect.offsetMax = new Vector2(0f, yMax);
     }
 
     private string BuildSelectedLocation(StatsMode mode, IReadOnlyList<string> sourceFiles)
@@ -2345,6 +2476,7 @@ internal sealed class StatsTabController_US : MonoBehaviour
         obj.transform.SetParent(parent, false);
 
         TextMeshProUGUI text = obj.GetComponent<TextMeshProUGUI>();
+        text.richText = true;
         MainMenuButton_US.ApplyPanelTextStyle(_styleRoot, text);
         text.text = value;
         text.fontSize = fontSize;
