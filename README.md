@@ -118,7 +118,7 @@ You can change the parent folder through **PluginConfigurator**. ULTRASTATS will
 
 ULTRASTATS stores runs by **difficulty** first, then by mode.
 
-![ULTRASTATS file structure overview](images/FileStructure.png)
+![ULTRASTATS file structure](https://raw.githubusercontent.com/AtomSmasher1586/ULTRASTATS/main/images/FileStructure.png)
 
 This image is the main reference for the save layout. It shows campaign files grouped into layer folders, a separate Cybergrind file for each difficulty, and custom level files grouped under bundle keys. In the example names, the suffix before `.jsonl` such as `_4` is the difficulty number.
 
@@ -128,7 +128,7 @@ This image is the main reference for the save layout. It shows campaign files gr
 
 Each line in a ULTRASTATS `.jsonl` file is one saved run.
 
-![ULTRASTATS manual data reference](images/ManualDataReading.png)
+![ULTRASTATS file structure](https://raw.githubusercontent.com/AtomSmasher1586/ULTRASTATS/main/images/ManualDataReading.png)
 
 This image is the main reference for the compact field names used in ULTRASTATS logs. **Blue** entries are shared fields, **yellow** is Cybergrind-specific, and **cyan** is used for Campaign and Custom runs. `F` stores run flags: `1` means major assists, `2` means cheats, and `3` means both. For Cybergrind, `w` stores the wave, with the last two digits representing percent completion.
 
