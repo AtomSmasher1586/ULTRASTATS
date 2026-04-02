@@ -1,0 +1,152 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<LangVersion>latest</LangVersion>
+		<Nullable>enable</Nullable>
+
+		<UltrakillDir>C:\Games\ULTRAKILL_Modding</UltrakillDir>
+		<PluginDir>$(UltrakillDir)\BepInEx\plugins\ULTRASTATS</PluginDir>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Remove="images\**\*.*" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<!-- icon.png goes in the plugin root -->
+		<Content Include="images\icon.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>icon.png</TargetPath>
+		</Content>
+
+		<!-- everything else in images\ stays inside an images subfolder -->
+		<Content Include="images\**\*.*" Exclude="images\icon.png">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+			<TargetPath>images\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+		</Content>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="BepInEx">
+			<HintPath>lib\BepInEx.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+
+		<Reference Include="0Harmony">
+			<HintPath>lib\0Harmony.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+
+		<Reference Include="Assembly-CSharp">
+			<HintPath>lib\Assembly-CSharp.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+
+		<Reference Include="PluginConfigurator">
+			<HintPath>$(UltrakillDir)\BepInEx\plugins\PluginConfigurator\PluginConfigurator.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+
+		<Reference Include="UnityEngine">
+			<HintPath>lib\UnityEngine.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+
+		<Reference Include="UnityEngine.ImageConversionModule">
+			<HintPath>$(UltrakillDir)\ULTRAKILL_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+
+		<Reference Include="UnityEngine.CoreModule">
+			<HintPath>lib\UnityEngine.CoreModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+
+		<Reference Include="UnityEngine.JSONSerializeModule">
+			<HintPath>$(UltrakillDir)\ULTRAKILL_Data\Managed\UnityEngine.JSONSerializeModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+
+		<Reference Include="UnityEngine.InputLegacyModule">
+			<HintPath>$(UltrakillDir)\ULTRAKILL_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+
+		<Reference Include="UnityEngine.UIModule">
+			<HintPath>$(UltrakillDir)\ULTRAKILL_Data\Managed\UnityEngine.UIModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+
+		<Reference Include="Unity.TextMeshPro">
+			<HintPath>lib\Unity.TextMeshPro.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+
+		<Reference Include="UnityEngine.TextRenderingModule">
+			<HintPath>$(UltrakillDir)\ULTRAKILL_Data\Managed\UnityEngine.TextRenderingModule.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+
+		<Reference Include="UnityEngine.UI">
+			<HintPath>$(UltrakillDir)\ULTRAKILL_Data\Managed\UnityEngine.UI.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+	</ItemGroup>
+
+	<Target Name="CopyToBepInExPlugins" AfterTargets="Build" Condition="'$(Configuration)'=='Debug'">
+		<MakeDir Directories="$(PluginDir)" />
+		<MakeDir Directories="$(PluginDir)\images" />
+
+		<Copy SourceFiles="$(TargetPath)"
+			  DestinationFolder="$(PluginDir)"
+			  SkipUnchangedFiles="true" />
+
+		<Copy SourceFiles="$(TargetDir)$(TargetName).pdb"
+			  DestinationFolder="$(PluginDir)"
+			  SkipUnchangedFiles="true"
+			  Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
+
+		<Copy SourceFiles="$(TargetDir)icon.png"
+			  DestinationFolder="$(PluginDir)"
+			  SkipUnchangedFiles="true"
+			  Condition="Exists('$(TargetDir)icon.png')" />
+
+		<ItemGroup>
+			<BuiltImageFiles Include="$(TargetDir)images\**\*.*" />
+		</ItemGroup>
+
+		<Copy SourceFiles="@(BuiltImageFiles)"
+			  DestinationFiles="@(BuiltImageFiles->'$(PluginDir)\images\%(RecursiveDir)%(Filename)%(Extension)')"
+			  SkipUnchangedFiles="true"
+			  Condition="'@(BuiltImageFiles)' != ''" />
+	</Target>
+
+	<Target Name="CleanBepInExCopy" BeforeTargets="Clean">
+		<Delete Files="$(PluginDir)\$(TargetFileName)" Condition="Exists('$(PluginDir)\$(TargetFileName)')" />
+		<Delete Files="$(PluginDir)\$(TargetName).pdb" Condition="Exists('$(PluginDir)\$(TargetName).pdb')" />
+		<Delete Files="$(PluginDir)\icon.png" Condition="Exists('$(PluginDir)\icon.png')" />
+
+		<ItemGroup>
+			<PluginImageFiles Include="$(PluginDir)\images\**\*.*" />
+		</ItemGroup>
+
+		<Delete Files="@(PluginImageFiles)" Condition="'@(PluginImageFiles)' != ''" />
+	</Target>
+
+</Project>

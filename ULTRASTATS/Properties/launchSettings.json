@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "ULTRASTATS": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Games\\ULTRAKILL_Modding\\ULTRAKILL.exe",
+      "workingDirectory": "C:\\Games\\ULTRAKILL_Modding"
+    }
+  }
+}
