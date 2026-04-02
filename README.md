@@ -21,6 +21,11 @@ ULTRASTATS currently supports:
 
 This repo is currently on **v0.0.12**.
 
+Here is an example of the new ingame stat viewer works:
+![ULTRASTATS file structure](https://raw.githubusercontent.com/AtomSmasher1586/ULTRASTATS/main/images/cyberView.png)
+![ULTRASTATS file structure](https://raw.githubusercontent.com/AtomSmasher1586/ULTRASTATS/main/images/campaignView.png)
+![ULTRASTATS file structure](https://raw.githubusercontent.com/AtomSmasher1586/ULTRASTATS/main/images/customView.png)
+
 ---
 
 ## Features
